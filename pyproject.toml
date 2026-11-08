@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "reviews-nlp"
+version = "0.1.0"
+description = "Analyse automatique d'avis clients : qualité des données, sentiment, thèmes et synthèse par LLM"
+requires-python = ">=3.10"
+dependencies = ["pandas", "numpy", "scikit-learn", "scipy", "matplotlib>=3.9", "joblib"]
+
+[project.optional-dependencies]
+full = ["datasets", "sentence-transformers", "anthropic", "streamlit"]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

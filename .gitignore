@@ -1,0 +1,20 @@
+# Données et modèles générés
+data/*
+!data/.gitkeep
+outputs/*.joblib
+*.db
+
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# Quarto
+.quarto/
+report/*_files/
+report/report.html

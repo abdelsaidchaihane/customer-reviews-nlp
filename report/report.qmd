@@ -1,0 +1,87 @@
+---
+title: "Analyse automatique d'avis clients : sentiment, thèmes et synthèse par LLM"
+author: "Abdel Said Chaihane"
+format:
+  html:
+    toc: true
+    embed-resources: true
+jupyter: python3
+execute:
+  echo: false
+  warning: false
+---
+
+```{python}
+import json
+from pathlib import Path
+import pandas as pd
+from IPython.display import Markdown, display
+
+OUT = Path("..") / "outputs"
+read_json = lambda name: json.loads((OUT / name).read_text(encoding="utf-8"))
+```
+
+## 1. Problématique
+
+Un volume important d'avis clients est difficile à lire à la main. Le projet cherche à
+(i) fiabiliser le corpus, (ii) prédire le sentiment, (iii) faire émerger les thèmes récurrents et
+(iv) tester une synthèse automatique par LLM **dont la fiabilité est mesurée**. Les critères d'évaluation
+ont été fixés avant la modélisation (voir `docs/cadrage.md`).
+
+## 2. Données et qualité
+
+```{python}
+report, log = read_json("quality_report_raw.json"), read_json("cleaning_log.json")
+pd.DataFrame({"indicateur": list(report.keys())[:6], "valeur": [report[k] for k in list(report.keys())[:6]]})
+```
+
+Journal de nettoyage :
+
+```{python}
+pd.Series(log, name="nombre d'avis").to_frame()
+```
+
+Répartition des classes : `{python} report["sentiment_counts"]` — rapport max/min = `{python} report["imbalance_ratio_max_over_min"]`.
+
+## 3. Exploration statistique
+
+```{python}
+display(pd.read_csv(OUT / "rating_distribution.csv"))
+display(pd.DataFrame(read_json("statistical_tests.json")).T)
+```
+
+![](../outputs/figures/rating_distribution.png){width=45%}
+![](../outputs/figures/length_by_stars.png){width=45%}
+
+## 4. Thèmes
+
+```{python}
+pd.read_csv(OUT / "lda_topics.csv")
+```
+
+## 5. Classification de sentiment
+
+```{python}
+pd.read_csv(OUT / "model_metrics.csv")
+```
+
+Métrique principale : **F1 macro** (les classes sont déséquilibrées). La baseline « classe majoritaire »
+est la référence à dépasser.
+
+## 6. Synthèse par LLM et fiabilité
+
+```{python}
+path = OUT / "llm_evaluation.json"
+if path.exists():
+    display(pd.json_normalize(read_json("llm_evaluation.json")).T)
+else:
+    display(Markdown("_Échantillon pas encore annoté : voir `annotations/` puis `make score`._"))
+```
+
+## 7. Limites et pistes d'amélioration
+
+- Corpus en anglais, restaurants américains (Yelp 2015) : généralisation à d'autres domaines non testée.
+- La classe « neutre » (3 étoiles) est intrinsèquement ambiguë ; l'erreur se concentre souvent dessus.
+- LDA : nombre de thèmes fixé a priori ; à comparer avec d'autres valeurs ou avec BERTopic.
+- Échantillon d'annotation du LLM limité et annoté par une seule personne : pas d'accord inter-annotateurs.
+- Pistes : affiner un modèle de type transformer, évaluer plusieurs LLM, mesurer l'accord inter-annotateurs.
